@@ -3,6 +3,7 @@ function trials_sorted = tACSChallenge_SortData(data_path, subj, conditions)
 %% modified by Benedikt Zoefel, CNRS Toulouse, in October 2021, April 2022 (clean tACS signal), and June 2022 (correction for imperfect stimulation frequency)
 %% modified by Florian Kasten in March 2022 (correction of target onsets)
 %% modified by BZ in June 2025 (check for number of blocks)
+%% modified by Simon Hanslmayr July 25 to account for use of different response buttons (L vs R)
 
 %% data_path refers to the folder the data is located in (each subject in separate folder).
 %% example for condition labels: conditions = {'*Montage A*','*Montage B*','*Montage C*'};
@@ -28,6 +29,11 @@ for c = 1:length(conditions)
         
         %% get onsets of button presses
         respOnsets = diff(data.R_Button);
+        % check if subject used Right button
+        chckbttn=isempty(find(respOnsets ~= 0));
+        if chckbttn == 1
+            respOnsets = diff(data.L_Button);
+        end
         respOnsets(respOnsets < 0) = 0;
         %% this is when the subject pressed the button (in sample points)
         RespLat = find(respOnsets>0);

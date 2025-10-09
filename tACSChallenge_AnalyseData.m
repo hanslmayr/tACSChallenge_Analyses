@@ -1,4 +1,4 @@
-function [all_ps,all_bs,all_hit_probs,all_bs_perm,all_pfs,group_level_p,group_level_comp,pf_p] = tACSChallenge_AnalyseData(data_path, subjs, conditions, perm)
+function [all_ps,all_bs,all_hit_probs,all_bs_perm,all_pfs,group_level_p,group_level_comp,pf_p, all_hits] = tACSChallenge_AnalyseData(data_path, subjs, conditions, perm)
 %% script originally written by Benedikt Zoefel, CNRS Toulouse, in October 2021
 %% modified in April 22 and June 25 (minor fixes)
 %% added permutations and preferred phases in April 24
@@ -25,13 +25,28 @@ all_hit_probs = zeros(no_phases,length(conditions),length(subjs));
 all_bs_perm = zeros(length(conditions),length(subjs),perm);
 all_pfs = zeros(length(conditions),length(subjs)); % preferred phases
 
-for s = 1:length(subjs)
-    % load the data
-    curr_data = tACSChallenge_SortData(data_path, subjs{s}, conditions);
-    % and analyse it
-    [all_ps(:,s), all_bs(:,s), all_hit_probs(:,:,s),all_bs_perm(:,s,:),all_pfs(:,s)] = tACSChallenge_EvalData(curr_data,perm,s); 
+
+h = waitbar(0, 'Processing subjects...');  % Initialize waitbar
+numSubjs = length(subjs);  % Total number of subjects
+
+for s = 1:numSubjs
+    % Update waitbar
+    waitbar(s / numSubjs, h, sprintf('Processing subject %d of %d', s, numSubjs));
     
+    % Load the data
+    curr_data = tACSChallenge_SortData(data_path, subjs{s}, conditions);
+    
+    % Analyse the data
+    [all_ps(:,s), all_bs(:,s), all_hit_probs(:,:,s), all_bs_perm(:,s,:), all_pfs(:,s)] = ...
+        tACSChallenge_EvalData(curr_data, perm, s); 
+    
+    for c = 1:length(conditions)
+        ntrls(s,c) = length(curr_data{c,1}(:,2));
+        all_hits(s,c) = sum(curr_data{c,1}(:,2)) / ntrls(s,c);
+    end
 end
+close(h);  % Close waitbar when done
+
 
 all_hit_probs(no_phases+1,:,:) = all_hit_probs(1,:,:); % duplicate first phase bin for visualisation
 
